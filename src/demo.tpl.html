@@ -1,0 +1,160 @@
+<meta charset="utf-8">
+<title>Agent Face</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: live face as the hero on the left, controls rail on the right; component reference below. */
+:root{
+  --bg:#efeee9; --panel:#f8f7f3; --line:#dcdad3; --fg:#1c1c1b; --muted:#6d6b65; --accent:#3a5bd9; --code:#e7e5de;
+  --font:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1c1c1c; --panel:#242424; --line:#343434; --fg:#ecebe7; --muted:#9a9892; --accent:#8ea4ff; --code:#2a2a2a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1c1c1c; --panel:#242424; --line:#343434; --fg:#ecebe7; --muted:#9a9892; --accent:#8ea4ff; --code:#2a2a2a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 var(--font);padding-inline:16px;padding-block:24px;margin:0}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:28px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
+h1{font-size:18px;font-weight:600;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px}
+.stage-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:760px){.stage-grid{grid-template-columns:minmax(0,1fr)}}
+.hero{position:relative;aspect-ratio:1;max-width:520px;width:100%;margin:0 auto}
+.hero-face{width:100%;height:100%}
+.state-tag{position:absolute;left:0;bottom:0;font:500 12px var(--mono);color:var(--muted)}
+.rail{display:grid;gap:18px;min-width:0}
+.group{display:grid;gap:8px}
+.lbl{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font:500 12.5px var(--font);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.pill:hover{border-color:var(--muted)}
+.pill[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.pill:focus-visible,.sw:focus-visible,.shape:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.state .pill{padding:7px 14px;font-size:13px}
+.shapes{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.shape{aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;cursor:pointer;display:grid;place-items:center}
+.shape svg{width:100%;height:100%}
+.shape path{fill:var(--muted)}
+.shape[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.sw{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:2px}
+.slider{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+.slider input{flex:1;accent-color:var(--accent)}
+.sizes{display:flex;flex-wrap:wrap;align-items:flex-end;gap:22px;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.size{display:grid;justify-items:center;gap:6px;font:11px var(--mono);color:var(--muted)}
+.chat{display:flex;align-items:center;gap:10px;padding:10px 14px 10px 10px;background:var(--bg);border:1px solid var(--line);border-radius:12px;font-size:13px;flex:1;min-width:240px}
+.chat .av{width:36px;height:36px;flex:none}
+h2{font-size:14px;font-weight:600;margin:0}
+pre{margin:0;background:var(--code);border-radius:12px;padding:14px 16px;overflow-x:auto;font:12.5px/1.6 var(--mono)}
+.api .group{align-content:start}
+.api{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.api{grid-template-columns:minmax(0,1fr)}}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:500;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+td code{font:12px var(--mono)}
+.tbl{overflow-x:auto}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Agent Face</h1>
+    <span class="sub">One dependency-free script · 14 bodies · 11 states · designed gaze</span>
+  </header>
+
+  <section class="stage-grid">
+    <div class="hero">
+      <div class="hero-face" id="hero"></div>
+      <span class="state-tag" id="stateTag">state: Idle</span>
+    </div>
+    <div class="rail">
+      <div class="group state"><div class="lbl">State</div><div class="row" id="states"></div></div>
+      <div class="group"><div class="lbl">Body</div><div class="shapes" id="shapes"></div></div>
+      <div class="group"><div class="lbl">Color</div><div class="row" id="colors"></div></div>
+      <div class="group"><div class="lbl">Behaviour</div><div class="sub">Hover the face and it follows the pointer; move away and it returns to the state's designed gaze, with the body turned the same way.</div></div>
+    </div>
+  </section>
+
+  <section class="group">
+    <div class="lbl">Sizes · each instance follows the pointer while it is over it</div>
+    <div class="sizes" id="sizes">
+      <div class="size"><div id="s24" style="width:24px;height:24px"></div>24</div>
+      <div class="size"><div id="s40" style="width:40px;height:40px"></div>40</div>
+      <div class="size"><div id="s72" style="width:72px;height:72px"></div>72</div>
+      <div class="size"><div id="s128" style="width:128px;height:128px"></div>128</div>
+      <div class="chat"><div class="av" id="chatAv"></div><span id="chatText">Busy</span></div>
+    </div>
+  </section>
+
+  <section class="api">
+    <div class="group">
+      <h2>Use it</h2>
+<pre><code>&lt;div id="face" style="width:160px;height:160px"&gt;&lt;/div&gt;
+&lt;script src="agent-face.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const face = new AgentFace('#face', {
+    shape: 'Pebble', color: 'blue', state: 'Idle'
+  });
+
+  face.setState('Attentive');   // user is typing
+  face.setState('Busy');        // thinking
+  face.setState('Excited');     // done
+  face.setShape('Heart');       // morph the body
+  face.setColor('orange');
+&lt;/script&gt;</code></pre>
+    </div>
+    <div class="group">
+      <h2>States</h2>
+      <div class="sub">The states are the eye designs from the Affinity file. Each one has its own resting gaze and a 5×5 grid of designed poses used while following the pointer. Suggested meanings below; map them to your agent's events.</div>
+      <div class="tbl"><table>
+        <thead><tr><th>State</th><th>Represents</th><th>Use for</th></tr></thead>
+        <tbody id="stateList"></tbody>
+      </table></div>
+    </div>
+  </section>
+</div>
+
+<script>
+/*AGENT_FACE_JS*/
+</script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const face = new AgentFace('#hero', { shape: 'Pebble', color: 'gray', state: 'Idle' });
+  const minis = [24, 40, 72, 128].map((s, i) => new AgentFace('#s' + s, {
+    shape: ['Circle','Egg','Cloud','Heart'][i], color: ['blue','orange','green','purple'][i], state: ['Idle','Curious','Shy','Excited'][i]
+  }));
+  const chat = new AgentFace('#chatAv', { shape: 'Pebble', color: 'black', state: 'Busy' });
+  let chatI = 0; const chatSeq = ['Busy','Focused','Excited','Attentive'];
+  setInterval(() => { chatI = (chatI + 1) % chatSeq.length; chat.setState(chatSeq[chatI]); $('chatText').textContent = chatSeq[chatI]; }, 2600);
+  $('stateList').innerHTML = Object.entries(AgentFace.stateInfo).map(([n, i]) => `<tr><td><code>${n}</code></td><td>${i.meaning}</td><td>${i.useFor}</td></tr>`).join('');
+
+  const pressGroup = (box, btn) => { for (const c of box.children) c.setAttribute('aria-pressed', c === btn); };
+  // states
+  for (const s of AgentFace.states){
+    const b = Object.assign(document.createElement('button'), { className:'pill', type:'button', textContent:s });
+    b.setAttribute('aria-pressed', s === 'Idle');
+    b.onclick = () => { face.setState(s); pressGroup($('states'), b); $('stateTag').textContent = 'state: ' + s; };
+    $('states').appendChild(b);
+  }
+  // shapes (thumbnails drawn from the component's own geometry via a hidden instance)
+  for (const n of AgentFace.shapes){
+    const b = document.createElement('button'); b.className = 'shape'; b.type = 'button'; b.title = n; b.setAttribute('aria-label', n);
+    b.setAttribute('aria-pressed', n === 'Pebble');
+    const tmp = document.createElement('div'); const f = new AgentFace(tmp, { shape:n, track:false, blink:false });
+    const d = f.bodyEl.getAttribute('d'); f.destroy();
+    b.innerHTML = `<svg viewBox="0 0 512 512" aria-hidden="true"><path d="${d}"/></svg>`;
+    b.onclick = () => { face.setShape(n); pressGroup($('shapes'), b); };
+    $('shapes').appendChild(b);
+  }
+  // colors
+  for (const [n, hex] of Object.entries(AgentFace.colors)){
+    const b = document.createElement('button'); b.className = 'sw'; b.type = 'button'; b.title = n; b.setAttribute('aria-label', n);
+    b.style.background = hex; b.setAttribute('aria-pressed', n === 'gray');
+    b.onclick = () => { face.setColor(n); pressGroup($('colors'), b); };
+    $('colors').appendChild(b);
+  }
+})();
+</script>

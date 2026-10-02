@@ -1,0 +1,39 @@
+{
+  "name": "agent-face",
+  "version": "1.0.0",
+  "description": "A procedural, expressive face for AI agents: 14 morphable bodies, 11 hand-designed states and a designed gaze. Zero dependencies.",
+  "keywords": [
+    "ai",
+    "agent",
+    "avatar",
+    "face",
+    "character",
+    "svg",
+    "animation",
+    "morph"
+  ],
+  "homepage": "https://github.com/Brightwav3/agent-face#readme",
+  "bugs": {
+    "url": "https://github.com/Brightwav3/agent-face/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Brightwav3/agent-face.git"
+  },
+  "funding": "https://buymeacoffee.com/brightwave",
+  "license": "GPL-3.0-only",
+  "author": "Brightwave",
+  "main": "agent-face.js",
+  "types": "agent-face.d.ts",
+  "files": [
+    "agent-face.js",
+    "agent-face.d.ts",
+    "README.md",
+    "LICENSE",
+    "docs/images"
+  ],
+  "scripts": {
+    "build": "python3 src/build.py"
+  },
+  "sideEffects": false
+}

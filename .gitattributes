@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.afdesign binary
+*.png binary
+src/data.json -diff linguist-generated
+agent-face.js linguist-generated
+demo.html linguist-generated
