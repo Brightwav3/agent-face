@@ -12,6 +12,8 @@ type AgentFaceColorName =
   | 'gray' | 'black' | 'offwhite' | 'orange' | 'yellow' | 'pink'
   | 'brown' | 'turquoise' | 'blue' | 'purple' | 'green';
 
+type AgentFaceEyeStyle = 'drawn' | 'glyph';
+
 interface AgentFaceOptions {
   /** Body shape. Default `'Pebble'`. */
   shape?: AgentFaceShape;
@@ -31,6 +33,8 @@ interface AgentFaceOptions {
   blink?: boolean;
   /** Accessible name. Default `'AI agent'`. */
   label?: string;
+  /** Eye style: the drawn designs or the typographic glyph set. Default `'drawn'`. */
+  eyes?: AgentFaceEyeStyle;
 }
 
 interface AgentFaceTransition {
@@ -58,11 +62,14 @@ declare class AgentFace {
   setColor(color: AgentFaceColorName | (string & {})): this;
   /** Hold the gaze on a direction (-1..1, +x right, +y down); `null` releases it. */
   lookAt(x: number | null, y?: number): this;
+  /** Switch the eye style. */
+  setEyes(style: AgentFaceEyeStyle): this;
   blink(): this;
   destroy(): void;
 
   static readonly states: AgentFaceState[];
   static readonly shapes: AgentFaceShape[];
+  static readonly eyeStyles: AgentFaceEyeStyle[];
   static readonly colors: Record<AgentFaceColorName, string>;
   static readonly stateInfo: Record<AgentFaceState, AgentFaceStateInfo>;
 }
@@ -74,6 +81,7 @@ declare namespace AgentFace {
   export type Options = AgentFaceOptions;
   export type Transition = AgentFaceTransition;
   export type StateInfo = AgentFaceStateInfo;
+  export type EyeStyle = AgentFaceEyeStyle;
 }
 
 export = AgentFace;

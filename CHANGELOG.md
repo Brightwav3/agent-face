@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0
+
+- New typographic eye style: `eyes: 'glyph'` and `setEyes()`, with a glyph for each of the 11 states.
+- `AgentFace.eyeStyles`.
+
 ## 1.0.0
 
 First release.

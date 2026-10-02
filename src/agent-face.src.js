@@ -13,6 +13,7 @@
   'use strict';
 
   const DATA = /*DATA*/null;
+  const GLYPH_DATA = /*GLYPHS*/null;   // typographic eye style: strokes per state and eye
 
   // ---------------------------------------------------------------------------
   // constants
@@ -85,6 +86,15 @@
       }
   };
 
+  // glyph eyes: strokes in face units -> px; resting direction from the pair center
+  const GLYPHS = {}, GLYPH_DIR = {};
+  for (const k in GLYPH_DATA.states) {
+    GLYPHS[k] = GLYPH_DATA.states[k].map(eye => eye.map(s => ({ pts: unflatG(s.p), closed: !!s.c, filled: !!s.f })));
+    let x = 0, y = 0, n = 0;
+    for (const eye of GLYPHS[k]) for (const s of eye) for (const p of s.pts) { x += p[0]; y += p[1]; n++; }
+    GLYPH_DIR[k] = [Math.max(-1, Math.min(1, x / n / 0.3)), Math.max(-1, Math.min(1, y / n / 0.3))];
+  }
+  function unflatG(a) { const o = []; for (let i = 0; i < a.length; i += 2) o.push([a[i], a[i + 1]]); return o; }
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const ci = s => String(s).toLowerCase().replace(/[^a-z]/g, '');
   const lookup = (table, name) => {
@@ -168,13 +178,14 @@
      * @param {object} [o]
      *   shape='Pebble', state='Idle' (one of AgentFace.states), color='gray' (name or CSS color),
      *   theme='auto'|'light'|'dark' (eye color), track='element'|'window'|false (follow the pointer while it is over the face / anywhere), trackRadius=0.9 (×size, for 'window'),
-     *   followEyes=true (body turns where the eyes look), blink=true, label='AI agent' (accessible name)
+     *   followEyes=true (body turns where the eyes look), blink=true, label='AI agent' (accessible name),
+     *   eyes='drawn'|'glyph' (eye style: the drawn designs, or the typographic glyph set)
      */
     constructor(el, o = {}) {
       this.el = typeof el === 'string' ? document.querySelector(el) : el;
       if (!this.el) throw new Error('AgentFace: container not found');
       this.o = Object.assign({ shape: 'Pebble', state: 'Idle', color: 'gray', theme: 'auto', track: 'element',
-        trackRadius: 0.9, followEyes: true, blink: true, label: 'AI agent' }, o);
+        trackRadius: 0.9, followEyes: true, blink: true, label: 'AI agent', eyes: 'drawn' }, o);
       this.reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
       this._buildDom();
 
@@ -210,6 +221,7 @@
         this._mqFn = () => this._applyEyeColor();
         this._mq.addEventListener ? this._mq.addEventListener('change', this._mqFn) : this._mq.addListener(this._mqFn);
       }
+      this.setEyes(this.o.eyes);
       live.add(this);
       this._render();
       this._kick();
@@ -241,12 +253,25 @@
       this.exprName = k; this.state = k; this.el.dataset.agentState = k;
       const from = this.eyes.map(clonePts), target = toPx(EXPR[k]);
       const to = target.map((e, i) => rotate(e, bestShift(from[i], e)));
-      [this.head.tx, this.head.ty] = this.o.followEyes ? EXPR_DIR[k] : [0, 0];
+      [this.head.tx, this.head.ty] = this.o.followEyes ? (this.o.eyes === 'glyph' ? GLYPH_DIR[k] : EXPR_DIR[k]) : [0, 0];
+      if (this.glyphName && this.glyphName !== k && !instant && !this.reduced) this.gSwap = { from: this.glyphName, t0: this.t, dur: Math.max(0.16, duration / 1000 * 0.6) };
+      this.glyphName = k;
       const s0 = this.eyeScale, s1 = fitScale(this.body, target);
       if (instant || this.reduced) { this.eyes = to.map(clonePts); this.eyeScale = s1; this.eyeAnim = null; this._kick(); return this; }
       this.eyeAnim = { from, to, s0, s1, t0: this.t, dur: duration / 1000 };
       this._kick(); return this;
     }
+
+    /** Eye style: 'drawn' (the Affinity designs) or 'glyph' (typographic set). */
+    setEyes(style) {
+      if (style !== 'drawn' && style !== 'glyph') throw new Error('AgentFace: eyes must be "drawn" or "glyph"');
+      this.o.eyes = style;
+      this.eyesEl.style.display = style === 'glyph' ? 'none' : '';
+      this.glyphEl.style.display = style === 'glyph' ? '' : 'none';
+      [this.head.tx, this.head.ty] = this.o.followEyes ? (style === 'glyph' ? GLYPH_DIR[this.exprName] : EXPR_DIR[this.exprName]) : [0, 0];
+      this._kick(); return this;
+    }
+    static get eyeStyles() { return ['drawn', 'glyph']; }
 
     /** Body color: palette name (see AgentFace.colors) or any CSS color. */
     setColor(c) {
@@ -288,9 +313,11 @@
       const eL = document.createElementNS(SVGNS, 'path'), eR = document.createElementNS(SVGNS, 'path');
       body.setAttribute('class', 'agent-face__body'); eyes.setAttribute('class', 'agent-face__eyes');
       body.style.transition = 'fill .35s ease'; eyes.style.transition = 'fill .35s ease';
-      eyes.append(eL, eR); head.append(body, eyes); svg.append(head);
+      const glyphs = document.createElementNS(SVGNS, 'g'); glyphs.setAttribute('class', 'agent-face__glyphs');
+      glyphs.style.transition = 'color .35s ease';
+      eyes.append(eL, eR); head.append(body, eyes, glyphs); svg.append(head);
       this.el.appendChild(svg);
-      Object.assign(this, { svg, headEl: head, bodyEl: body, eyesEl: eyes, eyeL: eL, eyeR: eR });
+      Object.assign(this, { svg, headEl: head, bodyEl: body, eyesEl: eyes, eyeL: eL, eyeR: eR, glyphEl: glyphs });
     }
 
     _applyEyeColor() {
@@ -303,6 +330,7 @@
       if (this.colorName === 'black') eye = EYE_LIGHT;
       if (this.colorName === 'offwhite') eye = EYE_DARK;
       this.eyesEl.style.fill = eye;
+      this.glyphEl.style.color = eye;
     }
 
     _exprEyesPx() { return toPx(EXPR[this.exprName]); }
@@ -361,6 +389,7 @@
       this.head.x = smooth(this.head.x, this.head.tx, r * 0.6, dt); this.head.y = smooth(this.head.y, this.head.ty, r * 0.6, dt);
       if (Math.abs(L.x - L.tx) + Math.abs(L.y - L.ty) + Math.abs(L.f - L.tf) + Math.abs(this.head.x - this.head.tx) + Math.abs(this.head.y - this.head.ty) > 1e-3) busy = true;
 
+      if (this.gSwap) { if (this.t - this.gSwap.t0 >= this.gSwap.dur) this.gSwap = null; busy = true; }
       // blink
       if (this.o.blink && !this.reduced) {
         if (!this._nextBlink) this._nextBlink = this.t + 1.5 + Math.random() * 3;
@@ -375,6 +404,45 @@
 
       this._render();
       if (busy && this._visible) this._raf = requestAnimationFrame(t => this._tick(t));
+    }
+
+    // typographic eyes: stroked glyphs that slide toward the gaze; state changes close one glyph and open the next
+    _renderGlyphs() {
+      const L = this.look;
+      let name = this.glyphName || this.exprName, open = 1;
+      if (this.gSwap) {
+        const p = Math.min(1, (this.t - this.gSwap.t0) / this.gSwap.dur);
+        if (p < 0.5) { name = this.gSwap.from; open = 1 - p * 2; } else open = p * 2 - 1;
+        open = open * open * (3 - 2 * open);
+      }
+      const G = GLYPHS[name]; if (!G) return;
+      const ox = L.x * 0.2 * L.f * R, oy = L.y * 0.16 * L.f * R;
+      let eyes = G.map(eye => eye.map(s => ({ ...s, pts: s.pts.map(p => [C + p[0] * R + ox, C + p[1] * R + oy]) })));
+      // keep the glyphs inside the body (with stroke margin)
+      const flat = eyes.map(eye => eye.flatMap(s => s.pts));
+      const fs = fitScale(this.body, flat), [pcx, pcy] = pairCenter(flat);
+      const kq = Math.max(0.06, (1 - 0.9 * this.blinkAmt) * open);
+      eyes = eyes.map(eye => {
+        const ys = eye.flatMap(s => s.pts.map(p => p[1])); const my = (Math.min(...ys) + Math.max(...ys)) / 2;
+        return eye.map(s => ({ ...s, pts: s.pts.map(p => {
+          const x = pcx + (p[0] - pcx) * fs, y = pcy + (p[1] - pcy) * fs, m = pcy + (my - pcy) * fs;
+          return [x, m + (y - m) * kq];
+        }) }));
+      });
+      const sw = (GLYPH_DATA.w * R * Math.min(1, fs * 1.1)).toFixed(2);
+      let html = '';
+      for (const eye of eyes) for (const s of eye) {
+        if (s.filled) {
+          const xs = s.pts.map(p => p[0]), ys = s.pts.map(p => p[1]);
+          const rx = (Math.max(...xs) - Math.min(...xs)) / 2 + GLYPH_DATA.w * R / 2, ry = (Math.max(...ys) - Math.min(...ys)) / 2 + GLYPH_DATA.w * R / 2 * kq;
+          html += '<ellipse cx="' + ((Math.max(...xs) + Math.min(...xs)) / 2).toFixed(2) + '" cy="' + ((Math.max(...ys) + Math.min(...ys)) / 2).toFixed(2) +
+                  '" rx="' + rx.toFixed(2) + '" ry="' + ry.toFixed(2) + '" fill="currentColor"/>';
+          continue;
+        }
+        const d = 'M' + s.pts.map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join('L') + (s.closed ? 'Z' : '');
+        html += '<path d="' + d + '" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="' + (s.closed ? 'round' : 'square') + '" stroke-linejoin="miter"/>';
+      }
+      this.glyphEl.innerHTML = html;
     }
 
     _pointerDir() {
@@ -411,6 +479,7 @@
         const kq = 1 - 0.9 * this.blinkAmt;
         E = E.map(e => { let my = 0; for (const p of e) my += p[1]; my /= e.length; return e.map(p => [p[0], my + (p[1] - my) * kq]); });
       }
+      if (this.o.eyes === 'glyph') { this._renderGlyphs(); return; }
       this.eyeL.setAttribute('d', toPath(E[0]));
       this.eyeR.setAttribute('d', toPath(E[1]));
     }

@@ -18,7 +18,7 @@
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy_me_a_coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/brightwave)
 [![Stars](https://img.shields.io/github/stars/Brightwav3/agent-face?style=flat&logo=github)](https://github.com/Brightwav3/agent-face/stargazers)
 
-[Features](#features) · [Quick start](#quick-start) · [States](#states) · [Bodies](#bodies) · [Gaze](#designed-gaze) · [API](#api) · [Frameworks](#frameworks) · [Build](#build-from-source)
+[Features](#features) · [Quick start](#quick-start) · [States](#states) · [Eye styles](#eye-styles) · [Bodies](#bodies) · [Gaze](#designed-gaze) · [API](#api) · [Frameworks](#frameworks) · [Build](#build-from-source)
 
 </div>
 
@@ -33,6 +33,7 @@
 ### Character
 - 🫧 **14 bodies.** Pebble, Circle, Cloud, Triangle, Hexagon, Pill, Flower, Cube, Cylinder, Bulb, Droplet, Egg, Heart and Pentagon. Any body morphs smoothly into any other.
 - 👀 **11 states.** Every state is an eye design drawn by hand in Affinity, from *Idle* and *Attentive* to *Busy*, *Startled* and *Sleep*.
+- 🔣 **Two eye styles.** The drawn eyes, or a typographic glyph set (`^ ^`, `+ +`, `> <`, `* *` …), switchable at runtime.
 - 🎨 **Palette.** Eleven colors out of the box, or any CSS color. In dark mode the eyes switch to black automatically. A black body always gets white eyes, an off-white body always gets black eyes.
 
 ### Alive
@@ -92,6 +93,30 @@ Each state is an eye design with its own resting gaze. The meanings below are su
 | `Sleep` | Inactive | paused, offline, idle for a long time |
 | `Irritated` | Blocked | rate-limited, access denied, the same thing failing again |
 
+## Eye styles
+
+<p align="center">
+  <img src="docs/images/glyph.png" width="820" alt="The glyph eye style on Agent Face bodies">
+</p>
+
+Besides the drawn eyes, every state has a typographic version: monoline glyphs with square caps.
+
+```js
+new AgentFace('#face', { eyes: 'glyph', state: 'Busy' });   // * *
+face.setEyes('drawn');                                      // back to the drawn eyes
+```
+
+| State | Glyph | | State | Glyph |
+| --- | --- | --- | --- | --- |
+| `Idle` | `\| \|` | | `Startled` | `O O` |
+| `Attentive` | `o o` | | `Busy` | `* *` |
+| `Curious` | `O ·` | | `Suspicious` | `– ·` |
+| `Shy` | `┌ ┌` | | `Sleep` | `◡ ◡` |
+| `Excited` | `^ ^` | | `Irritated` | `> <` |
+| `Focused` | `+ +` | | | |
+
+Glyph eyes slide toward the pointer instead of using the gaze grid. A state change closes one glyph and opens the next.
+
 ## Bodies
 
 <p align="center">
@@ -111,7 +136,6 @@ Each state has 9 key poses, and the pointer position blends between them:
 - **Corners** are the drawn design and its left/right mirror.
 - **Looking down** is the vertical mirror of looking up for the oval-eyed states. `Shy`, `Irritated` and `Sleep` keep their shape, because there the slant *is* the emotion.
 - **Looking straight on**, the eyes are clean capsules.
-- **Both eyes are the same eye** in every pose (mirrored where the design is mirrored, as in `Shy` and `Irritated`). Only `Suspicious` keeps one squinting eye, because that is the expression.
 
 When the pointer leaves the face, it returns to the state's resting pose.
 
@@ -130,6 +154,7 @@ When the pointer leaves the face, it returns to the state's resting pose.
 | `followEyes` | `true` | Turn the body toward the state's resting gaze |
 | `blink` | `true` | Automatic blinking |
 | `label` | `'AI agent'` | Accessible name (`aria-label`) |
+| `eyes` | `'drawn'` | Eye style: `'drawn'` or `'glyph'` |
 
 ### Methods
 
@@ -138,6 +163,7 @@ When the pointer leaves the face, it returns to the state's resting pose.
 | `setState(name, { duration?, instant? })` | Morph the eyes to another state |
 | `setShape(name, { duration?, instant? })` | Morph the body to another shape |
 | `setColor(color)` | Change the body color |
+| `setEyes(style)` | Switch between `'drawn'` and `'glyph'` eyes |
 | `lookAt(x, y)` · `lookAt(null)` | Hold the gaze on a direction (−1…1, +x right, +y down), or release it |
 | `blink()` | Blink now |
 | `destroy()` | Remove the face and its listeners |
@@ -146,7 +172,7 @@ Setters return the instance, so calls can be chained.
 
 ### Static properties
 
-`AgentFace.states` · `AgentFace.shapes` · `AgentFace.colors` · `AgentFace.stateInfo`
+`AgentFace.states` · `AgentFace.shapes` · `AgentFace.eyeStyles` · `AgentFace.colors` · `AgentFace.stateInfo`
 
 ## Frameworks
 
@@ -190,6 +216,7 @@ demo.html              interactive demo
 src/
 ├── agent-face.src.js  component source
 ├── data.json          packed geometry (bodies, states, gaze)
+├── glyphs.json        glyph eye style (strokes per state)
 ├── demo.tpl.html      demo page template
 ├── build.py           builds agent-face.js and demo.html
 └── pack.py            packs design exports into data.json

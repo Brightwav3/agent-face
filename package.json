@@ -1,6 +1,6 @@
 {
   "name": "agent-face",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A procedural, expressive face for AI agents: 14 morphable bodies, 11 hand-designed states and a designed gaze. Zero dependencies.",
   "keywords": [
     "ai",

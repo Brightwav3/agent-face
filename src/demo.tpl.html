@@ -71,6 +71,7 @@ td code{font:12px var(--mono)}
     </div>
     <div class="rail">
       <div class="group state"><div class="lbl">State</div><div class="row" id="states"></div></div>
+      <div class="group"><div class="lbl">Eye style</div><div class="row" id="styles"></div></div>
       <div class="group"><div class="lbl">Body</div><div class="shapes" id="shapes"></div></div>
       <div class="group"><div class="lbl">Color</div><div class="row" id="colors"></div></div>
       <div class="group"><div class="lbl">Behaviour</div><div class="sub">Hover the face and it follows the pointer; move away and it returns to the state's designed gaze, with the body turned the same way.</div></div>
@@ -148,6 +149,13 @@ td code{font:12px var(--mono)}
     b.innerHTML = `<svg viewBox="0 0 512 512" aria-hidden="true"><path d="${d}"/></svg>`;
     b.onclick = () => { face.setShape(n); pressGroup($('shapes'), b); };
     $('shapes').appendChild(b);
+  }
+  // eye style
+  for (const s of AgentFace.eyeStyles){
+    const b = Object.assign(document.createElement('button'), { className:'pill', type:'button', textContent: s === 'drawn' ? 'Drawn' : 'Glyph' });
+    b.setAttribute('aria-pressed', s === 'drawn');
+    b.onclick = () => { face.setEyes(s); minis.forEach(m => m.setEyes(s)); chat.setEyes(s); pressGroup($('styles'), b); };
+    $('styles').appendChild(b);
   }
   // colors
   for (const [n, hex] of Object.entries(AgentFace.colors)){

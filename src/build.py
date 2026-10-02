@@ -21,7 +21,7 @@ def write(name, text):
         f.write(text)
 
 
-component = read('agent-face.src.js').replace('/*DATA*/null', read('data.json'))
+component = read('agent-face.src.js').replace('/*DATA*/null', read('data.json')).replace('/*GLYPHS*/null', read('glyphs.json'))
 write('agent-face.js', component)
 write('demo.html', read('demo.tpl.html').replace('/*AGENT_FACE_JS*/', component))
 print(f'agent-face.js  {len(component.encode()):,} bytes')
